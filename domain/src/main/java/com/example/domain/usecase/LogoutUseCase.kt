@@ -1,0 +1,13 @@
+package com.example.domain.usecase
+
+import com.example.domain.model.SocialProvider
+import com.example.domain.repository.AuthRepository
+import javax.inject.Inject
+
+class LogoutUseCase @Inject constructor(
+    private val repository: AuthRepository
+) {
+    suspend operator fun invoke(provider: SocialProvider) {
+        repository.logout(provider)
+    }
+}
