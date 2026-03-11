@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     kotlin("kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -62,6 +63,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.protolite.well.known.types)
+//    implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -82,7 +85,10 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
-//
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+
+
 //    // Kakao
 //    implementation(libs.v2.user)
 //
@@ -91,4 +97,5 @@ dependencies {
 //
 //    // DataStore
     implementation(libs.androidx.datastore.preferences)
+
 }

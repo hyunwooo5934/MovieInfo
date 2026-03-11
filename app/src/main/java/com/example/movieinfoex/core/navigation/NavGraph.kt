@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.movieinfoex.feature.login.ui.LoginRoute
 import com.example.movieinfoex.feature.login.ui.LoginScreen
 import com.example.movieinfoex.feature.splash.ui.SplashRoute
 import com.example.movieinfoex.feature.splash.ui.SplashScreen
@@ -35,7 +36,13 @@ fun NavGraph() {
         }
 
         composable(route = Screen.LOGIN.route) {
-            LoginScreen(navHostController = navController)
+            LoginRoute(
+                onNavigateHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.LOGIN.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
 //        composable(route = Screen.Home.route) {
