@@ -1,7 +1,6 @@
 # Introduce
 
-Jetpack Compose & MVI 디자인 패턴 학습 프로젝트. (진행예정)
-
+Jetpack Compose & MVI 디자인 패턴 학습 프로젝트. 
 
 ## Project Goal
 - Jetpack Compose 기능 심화 학습
