@@ -1,4 +1,4 @@
-package com.example.movieinfoex.feature.home
+package com.example.movieinfoex.feature.home.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
