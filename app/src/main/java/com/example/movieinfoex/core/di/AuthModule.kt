@@ -1,11 +1,5 @@
 package com.example.movieinfoex.core.di
 
-import com.example.data.SessionStorage
-import com.example.data.SessionStorageImpl
-import com.example.data.auth.SocialAuthDataSource
-import com.example.data.auth.google.GoogleAuthDataSource
-import com.example.data.repository.AuthRepositoryImpl
-import com.example.domain.repository.AuthRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
