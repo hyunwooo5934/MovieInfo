@@ -1,5 +1,6 @@
 package com.example.movieinfoex.feature.login.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.AuthError
@@ -80,6 +81,7 @@ class LoginViewModel @Inject constructor(
 
                 is AuthResult.Failure -> {
                     val message = result.error.toMessage()
+                    Log.e("LoginViewModel",message)
                     _state.update {
                         it.copy(isLoading = false, errorMessage = message)
                     }

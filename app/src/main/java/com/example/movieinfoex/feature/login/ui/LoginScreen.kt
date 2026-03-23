@@ -22,19 +22,6 @@ import com.example.movieinfoex.feature.login.ui.component.OliveLogoSection
 import com.example.movieinfoex.feature.login.ui.component.SocialOutlinedButton
 
 @OptIn(ExperimentalMaterial3Api::class)
-
-//@androidx.compose.ui.tooling.preview.Preview(
-//    showBackground = true,
-//    showSystemUi = true
-//)
-//@Composable
-//fun OliveLoginScreenPreview() {
-//    MaterialTheme {
-//        LoginScreen()
-//    }
-//}
-
-
 @Composable
 fun LoginScreen(
     state: LoginState,
