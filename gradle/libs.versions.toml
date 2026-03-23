@@ -23,6 +23,7 @@ oauthJdk8 = "5.11.2"
 v2User = "2.20.1"
 material3 = "1.4.0"
 protoliteWellKnownTypes = "18.0.1"
+security-crypto = "1.1.0-alpha06"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -57,6 +58,7 @@ oauth-jdk8 = { module = "com.navercorp.nid:oauth-jdk8", version.ref = "oauthJdk8
 v2-user = { module = "com.kakao.sdk:v2-user", version.ref = "v2User" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
+androidx-security-crypto       = { group = "androidx.security", name = "security-crypto", version.ref = "security-crypto" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
