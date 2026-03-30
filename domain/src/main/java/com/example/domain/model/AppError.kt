@@ -28,6 +28,16 @@ sealed class AppError (
         : AppError(message, cause) {
 
     }
+}
 
-
+/**
+ * Throwable → AppError 안전 변환
+ * CancellationException은 절대 잡지 않고 재전파
+ */
+fun Throwable.toAppError(): AppError {
+    if (this is kotlinx.coroutines.CancellationException) throw this
+    return when (this) {
+        is AppError -> this
+        else -> AppError.NetworkError.Unknown(message ?: "알 수 없는 오류")
+    }
 }

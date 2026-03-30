@@ -13,3 +13,7 @@ annotation class NaverClientId
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class NaverClientSecret
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NaverClientName
