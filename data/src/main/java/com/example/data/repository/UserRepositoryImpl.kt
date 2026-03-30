@@ -7,9 +7,16 @@ import com.example.domain.model.AppError
 import com.example.domain.model.SocialLoginType
 import com.example.domain.model.User
 import com.example.domain.repository.UserRepository
+import com.example.snslogin.data.datasource.NaverAuthDataSource
+import com.navercorp.nid.NidOAuth
+import com.navercorp.nid.profile.domain.vo.NidProfile
+import com.navercorp.nid.profile.util.NidProfileCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 
 /**
@@ -27,13 +34,14 @@ import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
     private val googleDataSource: GoogleAuthDataSource,
+    private val naverAuthDataSource: NaverAuthDataSource,
     private val userDataStore: UserDataStore,
     @ApplicationContext private val context: Context
 ) : UserRepository {
 
     // 현재 로그인된 사용자 (메모리 캐시)
     // 추후 DataStore 또는 EncryptedSharedPreferences로 영속화 가능
-    private var cachedUser: User? = null
+    private var currentUser: User? = null
 
     override suspend fun signIn(
         token: String,
@@ -46,7 +54,8 @@ class UserRepositoryImpl @Inject constructor(
         }
         // 로그인 성공 시 loginType 저장
         userDataStore.saveLoginType(loginType)
-        cachedUser = user
+        userDataStore.saveLoginInfo(user)
+        currentUser = user
         Result.success(user)
 
     } catch (e: CancellationException) {
@@ -57,40 +66,19 @@ class UserRepositoryImpl @Inject constructor(
         Result.failure(AppError.NetworkError.Unknown(e.message ?: ""))
     }
 
-    override suspend fun getCurrentUser(): User? {
-        // 1. 메모리 캐시 확인 (가장 빠름)
-        cachedUser?.let { return it }
-
-        // 2. DataStore에서 loginType 확인
-        val loginType = userDataStore.getLoginType() ?: return null
-
-        // 3. 해당 SDK 토큰 유효성 확인 후 User 반환
-        return try {
-            when (loginType) {
-                SocialLoginType.GOOGLE -> googleDataSource.getSignedInUser()
-                SocialLoginType.NAVER  -> googleDataSource.getSignedInUser()
-                SocialLoginType.KAKAO  -> googleDataSource.getSignedInUser()
-            }.also { user ->
-                cachedUser = user // 조회 성공 시 캐시에 저장
-            }
-        } catch (e: Exception) {
-            // SDK 토큰 만료 또는 오류 → DataStore 초기화
-            userDataStore.clear()
-            null
-        }
-    }
+    override suspend fun getCurrentUser(): User? = userDataStore.getLoginInfo()
 
     override suspend fun signOut() {
-        cachedUser?.let { user ->
+        currentUser?.let { user ->
             googleDataSource.logout()
-//            when (user.loginType) {
-//                SocialLoginType.GOOGLE -> googleDataSource.logout()
-//                SocialLoginType.NAVER  ->
-//                SocialLoginType.KAKAO  ->
-//            }
+            when (user.loginType) {
+                SocialLoginType.GOOGLE -> googleDataSource.logout()
+                SocialLoginType.NAVER  -> naverAuthDataSource.logout()
+                SocialLoginType.KAKAO  -> googleDataSource.logout()
+            }
         }
         userDataStore.clear()   // DataStore 초기화
-        cachedUser = null       // 메모리 캐시 초기화
+        currentUser = null       // 메모리 캐시 초기화
     }
 
     // ── 각 소셜 SDK 프로필 조회 ─────────────────────────────────────
@@ -112,15 +100,44 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     /** Naver: SDK API로 프로필 조회 */
-    private suspend fun fetchNaverProfile(): User {
-        return User(
-            uid = "", // 임시 uid, 실제론 JWT sub 클레임 파싱
-            email = "",             // 추후 JWT 파싱 또는 서버 응답으로 채움
-            displayName = "",
-            photoUrl = null,
-            loginType = SocialLoginType.NAVER
-        )
-    }
+//    private suspend fun fetchNaverProfile(): User {
+//        return User(
+//            uid = "", // 임시 uid, 실제론 JWT sub 클레임 파싱
+//            email = "",             // 추후 JWT 파싱 또는 서버 응답으로 채움
+//            displayName = "",
+//            photoUrl = null,
+//            loginType = SocialLoginType.NAVER
+//        )
+//    }
+
+    /** Naver: SDK API로 프로필 조회 */
+    private suspend fun fetchNaverProfile(): User =
+        suspendCancellableCoroutine { cont ->
+            NidOAuth.getUserProfile(
+                object : NidProfileCallback<NidProfile> {
+                    override fun onSuccess(result: NidProfile) {
+                        if (!cont.isActive) return
+                        cont.resume(
+                            User(
+                                uid = result.profile.id.orEmpty(),
+                                email = result.profile.email.orEmpty(),
+                                displayName = result.profile.name.orEmpty(),
+                                photoUrl = result.profile.profileImage,
+                                loginType = SocialLoginType.NAVER
+                            )
+                        )
+                    }
+
+                    override fun onFailure(errorCode: String, errorDesc: String) {
+                        cont.resumeWithException(
+                            AppError.AuthError.Unknown(
+                                "네이버 프로필 조회 실패: $errorCode / $errorDesc"
+                            )
+                        )
+                    }
+                }
+            )
+        }
 
 
     /** Kakao: SDK API로 프로필 조회 */

@@ -1,6 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
+val keysProperties = Properties().apply {
+    val file = rootProject.file("keys.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -19,15 +26,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        // local.properties 에서 키 주입
-        val properties = Properties().apply {
-            val file = rootProject.file("local.properties")
-            if (file.exists()) {
-                file.inputStream().use { load(it) }
-            }
-        }
+        resValue("string", "GOOGLE_WEB_CLIENT_ID", keysProperties.getProperty("GOOGLE_WEB_CLIENT_ID", ""))
+        resValue("string", "NAVER_CLIENT_ID", keysProperties.getProperty("NAVER_CLIENT_ID", ""))
+        resValue("string", "NAVER_CLIENT_SECRET", keysProperties.getProperty("NAVER_CLIENT_SECRET", ""))
 
-        resValue("string", "GOOGLE_WEB_CLIENT_ID", properties.getProperty("NAVER_CLIENT_ID", ""))
     }
 
     buildTypes {
@@ -59,11 +61,6 @@ dependencies {
 
     implementation(libs.hilt.android)
 
-    // Google Sign in
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
-
     // hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
@@ -72,4 +69,13 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.security.crypto)
 
+    // Google Sign in
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+    // naver sign in
+    implementation(libs.oauth)
+
+    implementation(libs.gson)
 }

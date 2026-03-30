@@ -28,8 +28,8 @@ import javax.inject.Inject
  * → 추후 서버 검증 시 이 idToken을 서버로 전달
  */
 class GoogleAuthDataSource @Inject constructor(
-    @GoogleWebClientId private val webClientId: String,
-    @ApplicationContext private val context: Context
+    @field:GoogleWebClientId private val webClientId: String,
+    @field:ApplicationContext private val context: Context
 ) : SocialAuthDataSource {
 
 

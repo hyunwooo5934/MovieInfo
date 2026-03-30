@@ -88,12 +88,13 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
 
+    // naver sign in
+    implementation(libs.oauth)
 
 //    // Kakao
 //    implementation(libs.v2.user)
-//
-//    // Naver
-//    implementation(libs.oauth.jdk8)
+
+
 //
 //    // DataStore
     implementation(libs.androidx.datastore.preferences)

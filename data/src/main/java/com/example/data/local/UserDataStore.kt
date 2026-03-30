@@ -8,6 +8,8 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.domain.model.SocialLoginType
+import com.example.domain.model.User
+import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -30,7 +32,10 @@ class UserDataStore @Inject constructor(
     // ── 키 정의 ─────────────────────────────────────────────────────
     private object Keys {
         val LOGIN_TYPE = stringPreferencesKey("login_type")
+        val LOGIN_INFO = stringPreferencesKey("login_info")
+
     }
+    val gson = Gson()
 
     // ── 읽기 ────────────────────────────────────────────────────────
 
@@ -47,6 +52,7 @@ class UserDataStore @Inject constructor(
             }
         }
 
+
     /** 저장된 loginType 단건 조회 (suspend) */
     suspend fun getLoginType(): SocialLoginType? = loginTypeFlow.first()
 
@@ -56,6 +62,28 @@ class UserDataStore @Inject constructor(
     suspend fun saveLoginType(loginType: SocialLoginType) {
         context.userDataStore.edit { prefs ->
             prefs[Keys.LOGIN_TYPE] = loginType.name
+        }
+    }
+
+
+    val loginInfoFlow: Flow<User?> = context.userDataStore.data
+        .catch { e ->
+            // IOException은 빈 preferences 방출 (DataStore 손상 시 대비)
+            if (e is IOException) emit(emptyPreferences())
+            else throw e
+        }
+        .map { prefs ->
+            val userJson = prefs[Keys.LOGIN_INFO]
+            gson.fromJson(userJson, User::class.java)
+        }
+
+    suspend fun getLoginInfo(): User? = loginInfoFlow.first()
+
+    suspend fun saveLoginInfo(loginInfo: User?){
+
+        context.userDataStore.edit { preferences ->
+            val userJson = gson.toJson(loginInfo)
+            preferences[Keys.LOGIN_INFO] = userJson
         }
     }
 
