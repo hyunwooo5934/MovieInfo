@@ -36,7 +36,7 @@ fun LoginRoute(
         state,
         onGoogleClick = { viewModel.onIntent(LoginIntent.SocialLogin(SocialLoginType.GOOGLE,context as Activity)) },
         onNaverClick = { viewModel.onIntent(LoginIntent.SocialLogin(SocialLoginType.NAVER,context as Activity)) },
-        onKakaoClick = { viewModel.onIntent(LoginIntent.SocialLogin(SocialLoginType.GOOGLE,context as Activity)) }
+        onKakaoClick = { viewModel.onIntent(LoginIntent.SocialLogin(SocialLoginType.KAKAO,context as Activity)) }
     )
 
 

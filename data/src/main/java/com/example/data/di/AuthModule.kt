@@ -1,8 +1,9 @@
 package com.example.data.di
 
 import android.content.Context
-import com.example.data.R
+import com.example.data.BuildConfig
 import com.example.data.datasource.GoogleAuthDataSource
+import com.example.data.datasource.KakaoAuthDataSource
 import com.example.data.local.UserDataStore
 import com.example.data.repository.UserRepositoryImpl
 import com.example.domain.repository.UserRepository
@@ -23,23 +24,19 @@ object AuthModule {
 
     @Provides
     @GoogleWebClientId
-    fun provideGoogleWebClientId(
-        @ApplicationContext context: Context
-    ): String = context.getString(R.string.GOOGLE_WEB_CLIENT_ID)
+    fun provideGoogleWebClientId(): String = BuildConfig.GOOGLE_WEB_CLIENT_ID
 
     @Provides
     @NaverClientId
-    fun provideNaverClientId(
-        @ApplicationContext context: Context
-    ): String = "tOC113jg46p8vLrDGnMA"
-//        context.getString(R.string.NAVER_CLIENT_ID)
+    fun provideNaverClientId(): String = BuildConfig.NAVER_CLIENT_ID
 
     @Provides
     @NaverClientSecret
-    fun provideNaverClientSecret(
-        @ApplicationContext context: Context
-    ): String = "XvH1dv838p"
-//        context.getString(R.string.NAVER_CLIENT_SECRET)
+    fun provideNaverClientSecret(): String = BuildConfig.NAVER_CLIENT_SECRET
+
+    @Provides
+    @Singleton
+    fun provideKakaoClientId(): String = BuildConfig.KAKAO_CLIENT_ID
 
     @Provides
     @NaverClientName
@@ -59,6 +56,12 @@ object AuthModule {
     @Singleton
     fun provideNaverAuthDataSource(): NaverAuthDataSource = NaverAuthDataSource()
 
+    @Provides
+    @Singleton
+    fun provideKakaoAuthDataSource(
+        @ApplicationContext context: Context
+    ): KakaoAuthDataSource = KakaoAuthDataSource(context)
+
 
     // ── Repository 제공 ─────────────────────────────────────────────
 
@@ -73,10 +76,11 @@ object AuthModule {
     fun provideUserRepository(
         googleDataSource: GoogleAuthDataSource,
         naverAuthDataSource: NaverAuthDataSource,
+        kakaoAuthDataSource: KakaoAuthDataSource,
         userDataStore: UserDataStore,
         @ApplicationContext context: Context
     ): UserRepository = UserRepositoryImpl(
-        googleDataSource, naverAuthDataSource,userDataStore, context
+        googleDataSource, naverAuthDataSource,kakaoAuthDataSource,userDataStore, context
     )
 
 }

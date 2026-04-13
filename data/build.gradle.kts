@@ -1,12 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
-val keysProperties = Properties().apply {
-    val file = rootProject.file("keys.properties")
-    if (file.exists()) {
-        file.inputStream().use { load(it) }
-    }
+val localProperties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
 }
+
+
 
 plugins {
     alias(libs.plugins.android.library)
@@ -26,9 +25,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        resValue("string", "GOOGLE_WEB_CLIENT_ID", keysProperties.getProperty("GOOGLE_WEB_CLIENT_ID", ""))
-        resValue("string", "NAVER_CLIENT_ID", keysProperties.getProperty("NAVER_CLIENT_ID", ""))
-        resValue("string", "NAVER_CLIENT_SECRET", keysProperties.getProperty("NAVER_CLIENT_SECRET", ""))
+        buildConfigField(
+            "String",
+            "GOOGLE_WEB_CLIENT_ID",
+            "\"${localProperties.getProperty("GOOGLE_WEB_CLIENT_ID")}\""
+        )
+
+
+        buildConfigField(
+            "String",
+            "NAVER_CLIENT_ID",
+            "\"${localProperties.getProperty("NAVER_CLIENT_ID")}\""
+        )
+        buildConfigField(
+            "String",
+            "NAVER_CLIENT_SECRET",
+            "\"${localProperties.getProperty("NAVER_CLIENT_SECRET")}\""
+        )
+
+        buildConfigField(
+            "String",
+            "KAKAO_CLIENT_ID",
+            "\"${localProperties.getProperty("KAKAO_CLIENT_ID")}\""
+        )
 
     }
 
@@ -48,6 +67,10 @@ android {
 //    kotlinOptions {
 //        jvmTarget = JavaVersion.VERSION_1_8.toString()
 //    }
+
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 kotlin {
@@ -76,6 +99,14 @@ dependencies {
 
     // naver sign in
     implementation(libs.oauth)
-
     implementation(libs.gson)
+
+    // kakao sign in
+    implementation(libs.v2.all)
+    implementation(libs.v2.user)
+    implementation(libs.v2.share)
+    implementation(libs.v2.talk)
+    implementation(libs.v2.friend)
+    implementation(libs.v2.navi)
+    implementation(libs.v2.cert)
 }

@@ -25,6 +25,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 카카오 로그인 리다이렉트 URI 처리 액티비티 -->
+        <activity
+            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- scheme: kakao + 네이티브앱키, host: oauth -->
+                <data
+                    android:host="oauth"
+                    android:scheme="kakao9f3564844526df9e9acc977cd5d2ed94" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
