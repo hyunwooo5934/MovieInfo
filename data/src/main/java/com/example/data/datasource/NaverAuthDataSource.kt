@@ -4,10 +4,15 @@ import android.app.Activity
 import android.util.Log
 import com.example.data.datasource.SocialAuthDataSource
 import com.example.domain.model.AppError
+import com.example.domain.model.SocialLoginType
+import com.example.domain.model.User
 import com.navercorp.nid.NidOAuth
 import com.navercorp.nid.oauth.util.NidOAuthCallback
+import com.navercorp.nid.profile.domain.vo.NidProfile
+import com.navercorp.nid.profile.util.NidProfileCallback
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Naver 로그인 DataSource
@@ -66,4 +71,34 @@ class NaverAuthDataSource : SocialAuthDataSource {
         }
         NidOAuth.logout(callback)
     }
+
+
+    /** Naver: SDK API로 프로필 조회 */
+    suspend fun fetchNaverProfile(): User =
+        suspendCancellableCoroutine { cont ->
+            NidOAuth.getUserProfile(
+                object : NidProfileCallback<NidProfile> {
+                    override fun onSuccess(result: NidProfile) {
+                        if (!cont.isActive) return
+                        cont.resume(
+                            User(
+                                uid = result.profile.id.orEmpty(),
+                                email = result.profile.email.orEmpty(),
+                                displayName = result.profile.name.orEmpty(),
+                                photoUrl = result.profile.profileImage,
+                                loginType = SocialLoginType.NAVER
+                            )
+                        )
+                    }
+
+                    override fun onFailure(errorCode: String, errorDesc: String) {
+                        cont.resumeWithException(
+                            AppError.AuthError.Unknown(
+                                "네이버 프로필 조회 실패: $errorCode / $errorDesc"
+                            )
+                        )
+                    }
+                }
+            )
+        }
 }
