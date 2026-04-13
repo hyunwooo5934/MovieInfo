@@ -2,13 +2,12 @@ package com.example.movieinfo
 
 import android.app.Application
 import com.example.data.di.naver.NaverSdkInitializer
+import com.kakao.sdk.common.KakaoSdk
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
-
 @HiltAndroidApp
 class MyApplication : Application() {
-
 
     // Hilt가 NaverSdkInitializer 주입
     @Inject lateinit var naverSdkInitializer: NaverSdkInitializer
@@ -16,6 +15,7 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         naverSdkInitializer.init()
+        KakaoSdk.init(this,BuildConfig.KAKAO_CLIENT_ID)
     }
 
 }

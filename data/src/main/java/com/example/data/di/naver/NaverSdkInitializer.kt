@@ -39,7 +39,6 @@ class NaverSdkInitializer @Inject constructor(
             }
         )
 
-        // ⚠️ 배포 버전에는 반드시 false — 토큰 등 민감 정보가 로그에 노출됩니다.
         val isDebug = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         NidOAuth.setLogEnabled(isDebug)
     }

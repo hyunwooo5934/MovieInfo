@@ -1,4 +1,10 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import kotlin.apply
+
+val localProperties = Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
+}
 
 plugins {
     alias(libs.plugins.android.application)
@@ -21,6 +27,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "KAKAO_CLIENT_ID",
+            "\"${localProperties["KAKAO_CLIENT_ID"]}\""
+        )
+
     }
 
     buildTypes {
@@ -42,6 +55,7 @@ android {
 //    }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -91,11 +105,15 @@ dependencies {
     // naver sign in
     implementation(libs.oauth)
 
-//    // Kakao
-//    implementation(libs.v2.user)
+    // kakao sign in
+    implementation(libs.v2.all)
+    implementation(libs.v2.user)
+    implementation(libs.v2.share)
+    implementation(libs.v2.talk)
+    implementation(libs.v2.friend)
+    implementation(libs.v2.navi)
+    implementation(libs.v2.cert)
 
-
-//
 //    // DataStore
     implementation(libs.androidx.datastore.preferences)
 

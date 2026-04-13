@@ -16,8 +16,6 @@ fun SplashRoute(
     viewModel: SplashViewModel = hiltViewModel()
 ) {
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when(effect){

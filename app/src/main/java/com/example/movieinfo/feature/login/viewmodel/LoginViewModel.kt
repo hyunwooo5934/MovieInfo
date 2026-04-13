@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.datasource.GoogleAuthDataSource
+import com.example.data.datasource.KakaoAuthDataSource
 import com.example.domain.model.AppError
 import com.example.domain.model.SocialLoginType
 import com.example.domain.model.toAppError
@@ -26,7 +27,8 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val googleAuthDataSource: GoogleAuthDataSource,
-    private val naverAuthDataSource: NaverAuthDataSource
+    private val naverAuthDataSource: NaverAuthDataSource,
+    private val kakaoAuthDataSource: KakaoAuthDataSource
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -81,7 +83,7 @@ class LoginViewModel @Inject constructor(
     ): Result<String> = when (type) {
         SocialLoginType.GOOGLE -> googleAuthDataSource.login(activity)
         SocialLoginType.NAVER  -> naverAuthDataSource.login(activity) // 추후 변경
-        SocialLoginType.KAKAO  -> googleAuthDataSource.login(activity) // 추후 변경
+        SocialLoginType.KAKAO  -> kakaoAuthDataSource.login(activity) // 추후 변경
     }
 
 
