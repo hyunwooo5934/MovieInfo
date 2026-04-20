@@ -6,6 +6,7 @@ import com.example.data.datasource.KakaoAuthDataSource
 import com.example.data.local.UserDataStore
 import com.example.data.repository.UserRepositoryImpl
 import com.example.domain.model.SocialLoginType
+import com.example.domain.model.User
 import com.example.snslogin.data.datasource.NaverAuthDataSource
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -18,7 +19,6 @@ import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import net.bytebuddy.matcher.ElementMatchers.any
 import org.junit.Before
 import org.junit.Test
 
@@ -55,6 +55,16 @@ class RepositoryImplTest {
     fun `signIn GOOGLE succeeds and saves login data`() = runTest {
         // given
         val token = "abcdefghijklmnopqrstuv"
+
+        val fakeUser = User(
+            uid = token.take(20),   // "abcdefghijklmnopqrst"
+            email = "",
+            displayName = "",
+            photoUrl = null,
+            loginType = SocialLoginType.GOOGLE
+        )
+
+        coEvery { googleDataSource.fetchGoogleProfile(token) } returns fakeUser
 
         coEvery { userDataStore.saveLoginType(any()) } just Runs
         coEvery { userDataStore.saveLoginInfo(any()) } just Runs
