@@ -1,11 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
+// ✅ 수정: CI 환경에서 local.properties 파일이 없어도 정상 작동
 val localProperties = Properties().apply {
-    load(rootProject.file("local.properties").inputStream())
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.exists()) {
+        load(propertiesFile.inputStream())
+    }
 }
-
-
 
 plugins {
     alias(libs.plugins.android.library)
@@ -25,30 +27,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
+        // ✅ 수정: 기본값 설정 (파일이 없으면 빈 문자열 사용)
         buildConfigField(
             "String",
             "GOOGLE_WEB_CLIENT_ID",
-            "\"${localProperties.getProperty("GOOGLE_WEB_CLIENT_ID")}\""
+            "\"${localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")}\""
         )
-
 
         buildConfigField(
             "String",
             "NAVER_CLIENT_ID",
-            "\"${localProperties.getProperty("NAVER_CLIENT_ID")}\""
+            "\"${localProperties.getProperty("NAVER_CLIENT_ID", "")}\""
         )
         buildConfigField(
             "String",
             "NAVER_CLIENT_SECRET",
-            "\"${localProperties.getProperty("NAVER_CLIENT_SECRET")}\""
+            "\"${localProperties.getProperty("NAVER_CLIENT_SECRET", "")}\""
         )
 
         buildConfigField(
             "String",
             "KAKAO_CLIENT_ID",
-            "\"${localProperties.getProperty("KAKAO_CLIENT_ID")}\""
+            "\"${localProperties.getProperty("KAKAO_CLIENT_ID", "")}\""
         )
-
     }
 
     buildTypes {
@@ -64,9 +65,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-//    kotlinOptions {
-//        jvmTarget = JavaVersion.VERSION_1_8.toString()
-//    }
 
     buildFeatures {
         buildConfig = true
@@ -94,7 +92,7 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
 
-    // build.gradle.kts
+    // datastore
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.security.crypto)
 
