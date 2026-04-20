@@ -1,0 +1,241 @@
+name: Android CI/CD Pipeline
+
+# 트리거 설정
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # 수동 실행 허용
+
+# 환경 변수
+env:
+  JAVA_VERSION: '17'
+  GRADLE_VERSION: '8.0'
+  ANDROID_API_LEVEL: '34'
+  NDK_VERSION: '25.1.8937393'
+
+jobs:
+  # 1️⃣ 코드 분석 및 Lint 검사
+  lint:
+    name: Code Analysis & Lint Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # SonarQube 분석을 위함
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Android Lint
+        run: ./gradlew lint --continue
+
+      - name: Upload Lint Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-reports
+          path: '**/build/reports/lint-results*.html'
+
+  # 2️⃣ Unit Tests 실행
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-reports
+          path: '**/build/reports/tests/**'
+
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-reports
+          path: '**/build/reports/coverage/**'
+
+  # 3️⃣ Instrumentation Tests (에뮬레이터)
+  instrumentation-tests:
+    name: Instrumentation Tests
+    runs-on: macos-latest # macOS는 Android 에뮬레이터 가속화 지원
+    strategy:
+      matrix:
+        api-level: [28, 31, 34]
+        target: [google_apis, default]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Instrumentation Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 5X
+          script: ./gradlew connectedAndroidTest --stacktrace
+
+      - name: Upload Instrumentation Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: instrumentation-test-reports-api${{ matrix.api-level }}
+          path: '**/build/reports/androidTests/**'
+
+  # 4️⃣ 코드 품질 분석 (SonarQube)
+  sonarqube:
+    name: SonarQube Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run SonarQube Analysis
+        run: ./gradlew sonarqube -Dsonar.projectKey=movieinfo -Dsonar.sources=src/main/java -Dsonar.exclusions='**/*Test.java,**/*Tests.java'
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+
+  # 5️⃣ 빌드 (Debug & Release)
+  build:
+    name: Build APK/AAB
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests] # lint와 unit-tests가 완료되어야 실행
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build Release AAB
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: ./gradlew bundleRelease
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-apk
+          path: '**/build/outputs/apk/debug/*.apk'
+
+      - name: Upload Release AAB
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-aab
+          path: '**/build/outputs/bundle/release/*.aab'
+
+  # 6️⃣ APK 정보 추출 및 레포트
+  apk-analysis:
+    name: APK Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download APK
+        uses: actions/download-artifact@v3
+        with:
+          name: debug-apk
+
+      - name: Analyze APK Size
+        run: |
+          echo "## APK Analysis Report 📦" >> $GITHUB_STEP_SUMMARY
+          find . -name "*.apk" -exec ls -lh {} \;
+          find . -name "*.apk" -exec sh -c 'echo "**APK Size:** $(du -h {} | cut -f1)"' \; >> $GITHUB_STEP_SUMMARY
+
+  # 7️⃣ 빌드 성공 알림
+  notify-success:
+    name: Build Success Notification
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests, lint]
+    if: success()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Success Summary
+        run: |
+          echo "## ✅ CI/CD Pipeline Success" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 Lint checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✔️ Unit tests passed" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏗️ APK/AAB build successful" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 All artifacts uploaded" >> $GITHUB_STEP_SUMMARY
+
+  # 8️⃣ 빌드 실패 알림
+  notify-failure:
+    name: Build Failure Notification
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests, lint]
+    if: failure()
+    steps:
+      - name: Create Failure Summary
+        run: |
+          echo "## ❌ CI/CD Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Build failed. Check the logs above for details." >> $GITHUB_STEP_SUMMARY

@@ -51,9 +51,9 @@ class UserRepositoryImpl @Inject constructor(
         loginType: SocialLoginType
     ): Result<User?> = try {
         val user = when (loginType) {
-            SocialLoginType.GOOGLE -> fetchGoogleProfile(token)
-            SocialLoginType.NAVER  -> fetchNaverProfile()
-            SocialLoginType.KAKAO  -> fetchKakaoProfile()
+            SocialLoginType.GOOGLE -> googleDataSource.fetchGoogleProfile(token)
+            SocialLoginType.NAVER  -> naverAuthDataSource.fetchNaverProfile()
+            SocialLoginType.KAKAO  -> kakaoAuthDataSource.fetchKakaoProfile()
         }
         // 로그인 성공 시 loginType 저장
         userDataStore.saveLoginType(loginType)
@@ -73,7 +73,6 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun signOut() {
         currentUser?.let { user ->
-            googleDataSource.logout()
             when (user.loginType) {
                 SocialLoginType.GOOGLE -> googleDataSource.logout()
                 SocialLoginType.NAVER  -> naverAuthDataSource.logout()
@@ -83,75 +82,5 @@ class UserRepositoryImpl @Inject constructor(
         userDataStore.clear()   // DataStore 초기화
         currentUser = null       // 메모리 캐시 초기화
     }
-
-    // ── 각 소셜 SDK 프로필 조회 ─────────────────────────────────────
-
-    /**
-     * Google: idToken에서 기본 정보 파싱
-     * 추후 서버 추가 시 이 메서드 제거하고 서버 응답 사용
-     */
-    private fun fetchGoogleProfile(idToken: String): User {
-        // idToken은 JWT — base64 디코딩으로 payload에서 정보 추출 가능
-        // 여기서는 Credential 생성 시 받은 정보 활용 (ViewModel에서 넘겨받는 방식으로 개선 가능)
-        return User(
-            uid = idToken.take(20), // 임시 uid, 실제론 JWT sub 클레임 파싱
-            email = "",             // 추후 JWT 파싱 또는 서버 응답으로 채움
-            displayName = "",
-            photoUrl = null,
-            loginType = SocialLoginType.GOOGLE
-        )
-    }
-
-
-    /** Naver: SDK API로 프로필 조회 */
-    private suspend fun fetchNaverProfile(): User =
-        suspendCancellableCoroutine { cont ->
-            NidOAuth.getUserProfile(
-                object : NidProfileCallback<NidProfile> {
-                    override fun onSuccess(result: NidProfile) {
-                        if (!cont.isActive) return
-                        cont.resume(
-                            User(
-                                uid = result.profile.id.orEmpty(),
-                                email = result.profile.email.orEmpty(),
-                                displayName = result.profile.name.orEmpty(),
-                                photoUrl = result.profile.profileImage,
-                                loginType = SocialLoginType.NAVER
-                            )
-                        )
-                    }
-
-                    override fun onFailure(errorCode: String, errorDesc: String) {
-                        cont.resumeWithException(
-                            AppError.AuthError.Unknown(
-                                "네이버 프로필 조회 실패: $errorCode / $errorDesc"
-                            )
-                        )
-                    }
-                }
-            )
-        }
-
-
-    /** Kakao: SDK API로 프로필 조회 */
-    private suspend fun fetchKakaoProfile(): User =
-        suspendCancellableCoroutine { cont ->
-            UserApiClient.instance.me { user, error ->
-                when {
-                    error != null -> throw AppError.AuthError.Unknown("카카오 프로필 조회 실패: ${error.message}")
-                    user != null -> cont.resume(
-                        User(
-                            uid = user.id?.toString() ?: "",
-                            email = user.kakaoAccount?.email ?: "",
-                            displayName = user.kakaoAccount?.profile?.nickname ?: "",
-                            photoUrl = user.kakaoAccount?.profile?.thumbnailImageUrl,
-                            loginType = SocialLoginType.KAKAO
-                        )
-                    )
-                    else -> throw AppError.AuthError.Unknown("카카오 사용자 정보 없음")
-                }
-            }
-        }
-
 
 }

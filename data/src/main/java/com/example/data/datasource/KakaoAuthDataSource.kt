@@ -3,6 +3,8 @@ package com.example.data.datasource
 import android.app.Activity
 import android.content.Context
 import com.example.domain.model.AppError
+import com.example.domain.model.SocialLoginType
+import com.example.domain.model.User
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.user.UserApiClient
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -71,4 +73,24 @@ class KakaoAuthDataSource @Inject constructor(
             }
         }
     }
+
+    /** Kakao: SDK API로 프로필 조회 */
+    suspend fun fetchKakaoProfile(): User =
+        suspendCancellableCoroutine { cont ->
+            UserApiClient.instance.me { user, error ->
+                when {
+                    error != null -> throw AppError.AuthError.Unknown("카카오 프로필 조회 실패: ${error.message}")
+                    user != null -> cont.resume(
+                        User(
+                            uid = user.id?.toString() ?: "",
+                            email = user.kakaoAccount?.email ?: "",
+                            displayName = user.kakaoAccount?.profile?.nickname ?: "",
+                            photoUrl = user.kakaoAccount?.profile?.thumbnailImageUrl,
+                            loginType = SocialLoginType.KAKAO
+                        )
+                    )
+                    else -> throw AppError.AuthError.Unknown("카카오 사용자 정보 없음")
+                }
+            }
+        }
 }

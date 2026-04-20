@@ -71,6 +71,9 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    kotlinOptions {
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
+    }
 }
 
 kotlin {
@@ -83,6 +86,9 @@ dependencies {
     implementation(project(mapOf("path" to ":domain")))
 
     implementation(libs.hilt.android)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // hilt
     implementation(libs.hilt.android)

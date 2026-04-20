@@ -103,4 +103,20 @@ class GoogleAuthDataSource @Inject constructor(
     }
 
 
+    /**
+     * Google: idToken에서 기본 정보 파싱
+     * 추후 서버 추가 시 이 메서드 제거하고 서버 응답 사용
+     */
+    fun fetchGoogleProfile(idToken: String): User {
+        // idToken은 JWT — base64 디코딩으로 payload에서 정보 추출 가능
+        // 여기서는 Credential 생성 시 받은 정보 활용 (ViewModel에서 넘겨받는 방식으로 개선 가능)
+        return User(
+            uid = idToken.take(20), // 임시 uid, 실제론 JWT sub 클레임 파싱
+            email = "",             // 추후 JWT 파싱 또는 서버 응답으로 채움
+            displayName = "",
+            photoUrl = null,
+            loginType = SocialLoginType.GOOGLE
+        )
+    }
+
 }

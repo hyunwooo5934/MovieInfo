@@ -1,20 +1,11 @@
 package com.example.movieinfo.feature.main
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import com.example.movieinfo.feature.tab.navigation.TabRoute
 
 @Composable
-fun MainScreen(){
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("환영합니다")
-    }
-
+fun MainScreen() {
+    Log.d("MainScreen", "MainScreen Composable")
+    TabRoute()
 }
