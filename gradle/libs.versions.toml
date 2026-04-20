@@ -33,6 +33,8 @@ protoliteWellKnownTypes = "18.0.1"
 security-crypto = "1.1.0-alpha06"
 v2UserVersion = "2.23.3"
 
+sonarqube = "4.4.0.3356"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
@@ -80,4 +82,5 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt"}
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube"}
 
